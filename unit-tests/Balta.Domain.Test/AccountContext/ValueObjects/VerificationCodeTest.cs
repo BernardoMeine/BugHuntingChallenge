@@ -56,11 +56,10 @@ public class VerificationCodeTest
     public void ShouldFailIfExpired()
     {
         var expiredDateTimeProvider = new Mock<IDateTimeProvider>();
-        expiredDateTimeProvider.Setup(e => e.UtcNow).Returns(_now.AddMinutes(10)); // data futura além da expiração
-
+        expiredDateTimeProvider.Setup(e => e.UtcNow).Returns(_now.AddMinutes(10)); 
+        
         var expiredCode = VerificationCode.ShouldCreate(_dateTimeProvider.Object);
-
-        // Agora simula a data atual ultrapassando o limite de validade do código
+        
         expiredCode.ShouldVerify(expiredCode.Code);
 
         Assert.Throws<InvalidVerificationCodeException>(() => expiredCode.ShouldVerify(expiredCode.Code));

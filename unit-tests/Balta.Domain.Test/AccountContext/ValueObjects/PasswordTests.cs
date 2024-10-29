@@ -158,7 +158,7 @@ public class PasswordTests
 
         password.MarkAsExpired();
 
-        Assert.NotNull(password.ExpiresAtUtc);  // Verifica que ExpiresAtUtc foi definido
+        Assert.NotNull(password.ExpiresAtUtc); 
         Assert.True(password.ExpiresAtUtc <= DateTime.UtcNow);
     }
 
