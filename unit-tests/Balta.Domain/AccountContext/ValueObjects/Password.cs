@@ -44,8 +44,19 @@ public record Password : ValueObject
             throw new InvalidPasswordException($"Password should have less than {MaxLength} characters");
 
         var hash = ShouldHashPassword(plainText);
-        
+
         return new Password(hash);
+    }
+
+    public static Password ShouldVerify(Password password)
+    {
+        if (password.IsExpired())
+            throw new InvalidPasswordException("Password is Expired");
+
+        if (password.MustChange)
+            throw new InvalidPasswordException("Password must change");
+
+        return password;
     }
 
     #endregion
@@ -53,8 +64,8 @@ public record Password : ValueObject
     #region Properties
 
     public string Hash { get; }
-    public DateTime? ExpiresAtUtc { get; }
-    public bool MustChange { get; }
+    public DateTime? ExpiresAtUtc { get; private set; }
+    public bool MustChange { get; private set; }
 
     #endregion
 
@@ -68,12 +79,26 @@ public record Password : ValueObject
     /// <param name="upperCase">use true to enable uppercase chars. Otherwise, will use only lowercase.</param>
     /// <returns>password generate.</returns>
     /// <exception cref="InvalidDataException">lenth needs to be greather than MinLength setted in class.</exception>
+    /// 
+
+    public void MarkAsExpired()
+    {
+        ExpiresAtUtc = DateTime.UtcNow;
+    }
+
+    public void MarkAsMustChange()
+    {
+        MustChange = true;
+    }
+
+    public bool IsExpired() => ExpiresAtUtc.HasValue && ExpiresAtUtc <= DateTime.UtcNow;
     public static string ShouldGenerate(
         short length = 16,
         bool includeSpecialChars = true,
         bool upperCase = true)
     {
-        if(length < MinLength){
+        if (length < MinLength)
+        {
             throw new InvalidDataException();
         }
         var chars = includeSpecialChars ? (Valid + Special + Numbers) : (Valid + Numbers);
@@ -82,18 +107,20 @@ public record Password : ValueObject
         var res = new char[length];
         var rnd = new Random();
 
-        res[0] = chars[rnd.Next(chars.Length -10, chars.Length)];
+        res[0] = chars[rnd.Next(chars.Length - 10, chars.Length)];
         index++;
 
-        res[index++] = chars[rnd.Next(26,26 * 2)]; 
+        res[index++] = chars[rnd.Next(26, 26 * 2)];
         index++;
 
-        if(includeSpecialChars){
-            res[index++] = chars[rnd.Next(Valid.Length,Valid.Length + Special.Length)]; 
-        } 
-        
-        if(upperCase){
-            res[index++] = chars[rnd.Next(0,26)]; 
+        if (includeSpecialChars)
+        {
+            res[index++] = chars[rnd.Next(Valid.Length, Valid.Length + Special.Length)];
+        }
+
+        if (upperCase)
+        {
+            res[index++] = chars[rnd.Next(0, 26)];
         }
 
         while (index < length)
